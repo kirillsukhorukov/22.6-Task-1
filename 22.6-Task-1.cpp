@@ -1,7 +1,5 @@
 #include <iostream>
 #include <string>
-#include <sstream>
-#include <locale>
 #include <map>
 
 void hello()
@@ -13,6 +11,21 @@ std::cout << " - Enter the subscriber's last name to find out the phone numbers 
 std::cout << " - Enter 'L' to view directory entries." << std::endl;
 std::cout << " - Enter 'Q' to exit the program." << std::endl << std::endl;
 return;
+}
+
+//Функция просмотра записей книги
+void view_dict (std::map<std::string, std::string> &phonebook)
+{
+    std::cout << std::endl << "Phone:   Last name:" << std::endl;
+
+    for (std::map<std::string, std::string>::iterator it=phonebook.begin(); it != phonebook.end(); ++it)
+    {
+        std::cout << it->first << " " << it->second << std::endl;
+    }
+
+    std::cout << std::endl;
+
+    return;
 }
 
 //Функция ввода запроса и определение его типа
@@ -130,6 +143,13 @@ void find_subscr (std::map<std::string, std::string> &phonebook, std::string &ke
 {
     std::cout << std::endl;
 
+    //Если справочник пуст, то вывести соответствующее сообщение
+    if (phonebook.empty())
+    {
+        std::cerr << "The directory is empty!" << std::endl << std::endl;
+        return;
+    }
+
     if(phonebook.find(key) != phonebook.end()) 
     {
         std::cout << "Phone - "<< phonebook.find(key)->first << std::endl;
@@ -145,26 +165,36 @@ void find_subscr (std::map<std::string, std::string> &phonebook, std::string &ke
     return;
 }
 
-void find_phone (std::map<std::string, std::string> &phonebook, std::string &request)
+void find_phone (std::map<std::string, std::string> &phonebook, std::string &req)
 {
-
-}
-
-//Функция просмотра записей книги
-void view_dict (std::map<std::string, std::string> &phonebook)
-{
-    std::cout << std::endl << "Phone:   Last name:" << std::endl;
+    std::cout << std::endl;
+    
+    bool match  = false;
+    
+    //Если справочник пуст, то вывести соответствующее сообщение
+    if (phonebook.empty())
+    {
+        std::cerr << "The directory is empty!" << std::endl << std::endl;
+        return;
+    }
 
     for (std::map<std::string, std::string>::iterator it=phonebook.begin(); it != phonebook.end(); ++it)
     {
-        std::cout << it->first << " " << it->second << std::endl;
+        if (it->second == req)
+        {
+            std::cout << "Last name - "<< it->second << std::endl;
+            std::cout << "Phone - "<< it->first << std::endl;
+            match = true;  
+        }
     }
+
+    if (!match) std::cerr << "There is no entry!" << std::endl;
 
     std::cout << std::endl;
 
     return;
-}
 
+}
 int main()
 {
     
