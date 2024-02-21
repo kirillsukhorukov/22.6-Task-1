@@ -118,21 +118,53 @@ std::string req_input(int &reqType)
     return str;
 }
 
-//Функция добавления абонента в словарь
-void add_subscr (std::map<std::string, std::string> &phonebook, std::string &req)
+//Функция добавления абонента в словари
+void add_subscr (std::map<std::string, std::string> &mapByPhone, std::multimap<std::string, std::string> &mmapByName, std::string &req)
 {
-    std::string key;
-    std::string value;
+    std::string phone;
+    std::string lastName;
 
-    //Выделяем из строки ключ и значение
+    //Выделяем из строки телефон и фамилию
     for (int i=0; i<req.length(); i++)
         {
-            if (i<8) key +=req[i];
-            if (i>8) value +=req[i];
+            if (i<8) phone +=req[i];
+            if (i>8) lastName +=req[i];
         }
 
-    phonebook[key] = value;
+    //Запись в соответствующие словари
+    
+    //Находим итератор записи по ключу равному телефону в mapByPhone
+    auto itm = mapByPhone.find(phone);
+    //Если такой номер уже есть в книге
+    if(itm != mapByPhone.end()) 
+    {
+        //Записываеи старую фамилию по данному телефону в переменную oldName
+        std::string oldName = itm->second;
 
+        //Записываем новую фамилию на заданный телефон в mapByPhone
+        mapByPhone[phone] = lastName;
+        
+        //Находим итератор первой найденной записи по старой фамилии в mmapByName
+        auto itmm = mmapByName.find(oldName);
+
+        //Записываем новую фамилию на заданный телефон в mmapByName
+        for (itmm; itmm != mmapByName.end() && itmm->first == oldName; ++itmm)
+            {
+                if (itmm->second == phone) 
+                {
+                    mmapByName.erase(itmm);
+                    mmapByName.emplace(lastName, phone);
+                    itmm = mmapByName.end();
+                }
+            }
+    }
+    //если такой номер отсутствует в книге, то просто добавляем записи в словари
+    else
+    {
+        mapByPhone.emplace(phone,lastName);
+        mmapByName.emplace(lastName, phone);
+    }
+    
     std::cout << std::endl << "The entry is included in the directory." << std::endl << std::endl;
 
     return;
@@ -165,40 +197,49 @@ void find_subscr (std::map<std::string, std::string> &phonebook, std::string &ke
     return;
 }
 
-void find_phone (std::map<std::string, std::string> &phonebook, std::string &req)
+//Функция поиска телефона по фамилии абонента
+void find_phone (std::multimap<std::string, std::string> &mmByName, std::string &req)
 {
     std::cout << std::endl;
     
     bool match  = false;
     
     //Если справочник пуст, то вывести соответствующее сообщение
-    if (phonebook.empty())
+    if (mmByName.empty())
     {
         std::cerr << "The directory is empty!" << std::endl << std::endl;
         return;
     }
 
-    for (std::map<std::string, std::string>::iterator it=phonebook.begin(); it != phonebook.end(); ++it)
+    //Находим итератор первой найденной записи
+    auto it = mmByName.find(req);
+
+    //Если он не равен итератору конца списка то выводим все записи пока совпадают ключи с запрашиваемой фамилией
+    if (it != mmByName.end())
     {
-        if (it->second == req)
-        {
-            std::cout << "Last name - "<< it->second << std::endl;
-            std::cout << "Phone - "<< it->first << std::endl;
-            match = true;  
-        }
+        for (it; it != mmByName.end() && it->first == req; ++it)
+            {
+                std::cout << "Last name - "<< it->first << std::endl;
+                std::cout << "Phone - "<< it->second << std::endl;
+            }
     }
-
-    if (!match) std::cerr << "There is no entry!" << std::endl;
-
+    //Если он равен концу списка выводим надпись что запись с запрашиваемой фамилией не найдена
+    else
+    {
+        std::cerr << "There is no entry!" << std::endl;
+    }
+    
     std::cout << std::endl;
 
     return;
 
 }
+
 int main()
 {
     
-    std::map<std::string, std::string> phonebook;
+    std::map<std::string, std::string> mapByPhone;
+    std::multimap<std::string, std::string> mmapByName;
 
     hello();
 
@@ -209,10 +250,10 @@ int main()
     do
     {
         request = req_input(reqType);
-        if (reqType == 1) add_subscr (phonebook, request);
-        if (reqType == 2) find_subscr (phonebook, request);
-        if (reqType == 3) find_phone (phonebook, request);
-        if (reqType == 4) view_dict (phonebook);
+        if (reqType == 1) add_subscr (mapByPhone, mmapByName, request);
+        if (reqType == 2) find_subscr (mapByPhone, request);
+        if (reqType == 3) find_phone (mmapByName, request);
+        if (reqType == 4) view_dict (mapByPhone);
     } while (reqType!=5);
     
     std::cout << std::endl << "Program completed. Press any key...";
